@@ -1,0 +1,33 @@
+{
+    "name": "shahariaazam/wp-rank-checker",
+    "description": "Check ranks for your plugins or themes with specific keyword and check how your plugins and themes are growing in WordPress public repository.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Shaharia Azam",
+            "email": "mail@shaharia.com"
+        }
+    ],
+    "require": {
+        "shahariaazam/http-client-support": "^1.0",
+        "symfony/dom-crawler": "^4.4",
+        "symfony/css-selector": "^4.4"
+    },
+    "require-dev": {
+        "squizlabs/php_codesniffer": "^3.5",
+        "friendsofphp/php-cs-fixer": "^2.16",
+        "phpunit/phpunit": "^8.5",
+        "php-http/guzzle6-adapter": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "ShahariaAzam\\WPRankChecker\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ShahariaAzam\\WPRankChecker\\Tests\\": "tests"
+        }
+    }
+}
