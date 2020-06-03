@@ -144,6 +144,14 @@ class RankChecker extends HTTPSupport
      */
     private function fetchPage($page = 1)
     {
+        $cacheItemKey = 'WP_Rank_Checker_FetchPage_' . $page;
+
+        if (!empty($this->cache)) {
+            if ($this->cache->hasItem($cacheItemKey)) {
+                return $this->cache->getItem($cacheItemKey)->get();
+            }
+        }
+
         $resultPageUrl = sprintf("https://wordpress.org/plugins/search/%s/page/%d", $this->keyword, $page);
 
         try {
@@ -161,7 +169,15 @@ class RankChecker extends HTTPSupport
             throw new RankCheckerException("Empty response from " . $resultPageUrl, $response->getStatusCode());
         }
 
-        return (string) $response->getBody();
+        $responseData = (string) $response->getBody();
+
+        if (!empty($this->cache)) {
+            $cachedItem = $this->cache->getItem($cacheItemKey);
+            $cachedItem->set($responseData);
+            $this->cache->save($cachedItem);
+        }
+
+        return $responseData;
     }
 
     /**
