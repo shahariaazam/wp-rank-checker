@@ -10,9 +10,12 @@ namespace ShahariaAzam\WPRankChecker\Tests\src;
 use Nyholm\Psr7\Response;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use ShahariaAzam\WPRankChecker\PluginEntity;
 use ShahariaAzam\WPRankChecker\RankChecker;
+use ShahariaAzam\WPRankChecker\RankCheckerException;
+use Symfony\Component\Cache\Adapter\NullAdapter;
 
 class RankCheckerTests extends TestCase
 {
@@ -27,14 +30,15 @@ class RankCheckerTests extends TestCase
 
         $httpClient = $this->getMockHttpClient(200, [], $this->getMockPluginCardDom([$fakePlugin]));
 
-        $rankChecker = new RankChecker('Test');
-        $rankChecker->setHttpClient($httpClient)
+        $rankChecker = new RankChecker($httpClient, new NullAdapter());
+        $rankChecker->setKeyword('Test')
+            ->setSearchPageLimit(2)
             ->checkRanks();
         $pluginLists = $rankChecker->getResults();
 
         $this->assertIsArray($pluginLists);
         $this->assertEquals('demo-1', $pluginLists[1]->getSlug());
-        $this->assertCount(5, $pluginLists);
+        $this->assertCount(2, $pluginLists);
     }
 
     public function testGetRankBySlug()
@@ -49,8 +53,8 @@ class RankCheckerTests extends TestCase
 
         $httpClient = $this->getMockHttpClient(200, [], $this->getMockPluginCardDom([$fakePluginOne, $fakePluginTwo]));
 
-        $rankChecker = new RankChecker('demo-2');
-        $rankChecker->setHttpClient($httpClient)
+        $rankChecker = new RankChecker($httpClient, new NullAdapter());
+        $rankChecker->setKeyword('demo-2')
             ->checkRanks();
         $this->assertEquals(2, $rankChecker->getRankBySlug('demo-2'));
         $this->assertNull($rankChecker->getRankBySlug(null));
@@ -58,36 +62,68 @@ class RankCheckerTests extends TestCase
 
     public function testFetchWithDifferentHTTPStatusCode()
     {
-        $this->expectException(\Exception::class);
+        $this->expectException(RankCheckerException::class);
 
         $httpClient = $this->getMockHttpClient(201, [], null);
 
-        $rankChecker = new RankChecker('Test');
-        $rankChecker->setHttpClient($httpClient)
+        $rankChecker = new RankChecker($httpClient, new NullAdapter());
+        $rankChecker->setKeyword('Test')
             ->checkRanks()
+            ->getResults();
+    }
+
+    public function testIfEmptyKeyword()
+    {
+        $this->expectException(RankCheckerException::class);
+
+        $httpClient = $this->getMockHttpClient(201, [], null);
+
+        $rankChecker = new RankChecker($httpClient, new NullAdapter());
+        $rankChecker->checkRanks()
             ->getResults();
     }
 
     public function testFetchWithEmptyResponse()
     {
-        $this->expectException(\Exception::class);
+        $this->expectException(RankCheckerException::class);
 
         $httpClient = $this->getMockHttpClient(200, [], '');
 
-        $rankChecker = new RankChecker('Test');
-        $rankChecker->setHttpClient($httpClient)
+        $rankChecker = new RankChecker($httpClient, new NullAdapter());
+        $rankChecker->setKeyword('Test')
+            ->checkRanks()
+            ->getResults();
+    }
+
+    public function testHTTPExceptions()
+    {
+        $this->expectException(RankCheckerException::class);
+
+        $httpClient = $this->getMockBuilder(ClientInterface::class)->getMock();
+        $httpClient->method('sendRequest')->willThrowException($this->getMockBuilder(ClientExceptionInterface::class)->getMock());
+
+        $rankChecker = new RankChecker($httpClient, new NullAdapter());
+        $rankChecker->setKeyword('Test')
+            ->checkRanks()
+            ->getResults();
+
+        $httpClient = $this->getMockBuilder(ClientInterface::class)->getMock();
+        $httpClient->method('sendRequest')->willThrowException($this->getMockBuilder(ClientExceptionInterface::class)->getMock());
+
+        $rankChecker = new RankChecker($httpClient, new NullAdapter());
+        $rankChecker->setKeyword('Test')
             ->checkRanks()
             ->getResults();
     }
 
     public function testFetchWithInvalidDOMStructure()
     {
-        $this->expectException(\Exception::class);
+        $this->expectException(RankCheckerException::class);
 
         $httpClient = $this->getMockHttpClient(200, [], '<div></div>');
 
-        $rankChecker = new RankChecker('Test');
-        $rankChecker->setHttpClient($httpClient)
+        $rankChecker = new RankChecker($httpClient, new NullAdapter());
+        $rankChecker->setKeyword('Test')
             ->checkRanks()
             ->getResults();
     }

@@ -8,7 +8,9 @@
 namespace ShahariaAzam\WPRankChecker;
 
 use Exception;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Http\Client\ClientExceptionInterface;
+use Psr\Http\Client\ClientInterface;
 use ShahariaAzam\HTTPClientSupport\Exception\FlexiHTTPException;
 use ShahariaAzam\HTTPClientSupport\HTTPSupport;
 use Symfony\Component\DomCrawler\Crawler;
@@ -20,6 +22,11 @@ use Symfony\Component\DomCrawler\Crawler;
  */
 class RankChecker extends HTTPSupport
 {
+    /**
+     * @var CacheItemPoolInterface
+     */
+    private $cache;
+
     /**
      * How many pages we need to crawl.
      * Currently WordPress displays 20 plugins in it's every search result page.
@@ -51,22 +58,46 @@ class RankChecker extends HTTPSupport
     /**
      * RankChecker constructor.
      *
-     * @param $keyword
+     * @param ClientInterface $httpClient
+     * @param CacheItemPoolInterface $cache
      */
-    public function __construct($keyword)
+    public function __construct(ClientInterface $httpClient, CacheItemPoolInterface $cache = null)
+    {
+        $this->setHttpClient($httpClient);
+        $this->searchPageLimit = 5;
+        $this->cache = $cache;
+    }
+
+    /**
+     * @param int $searchPageLimit
+     * @return RankChecker
+     */
+    public function setSearchPageLimit(int $searchPageLimit)
+    {
+        $this->searchPageLimit = $searchPageLimit;
+        return $this;
+    }
+
+    /**
+     * @param mixed $keyword
+     * @return RankChecker
+     */
+    public function setKeyword($keyword)
     {
         $this->keyword = $keyword;
-        $this->searchPageLimit = 5;
-        $this->pluginListsHTML = null;
+        return $this;
     }
 
     /**
      * @return RankChecker
-     * @throws ClientExceptionInterface
-     * @throws FlexiHTTPException
+     * @throws RankCheckerException
      */
     public function checkRanks()
     {
+        if (empty($this->keyword)) {
+            throw new RankCheckerException("You didn't provide any keyword");
+        }
+
         for ($i = 1; $i <= $this->searchPageLimit; $i++) {
             $contents = $this->fetchPage($i);
             $dom = new Crawler($contents);
@@ -107,23 +138,27 @@ class RankChecker extends HTTPSupport
     }
 
     /**
-     * @param  int $page
+     * @param int $page
      * @return string
-     * @throws ClientExceptionInterface
-     * @throws FlexiHTTPException
+     * @throws RankCheckerException
      */
     private function fetchPage($page = 1)
     {
-        $resultPageUrl = 'https://wordpress.org/plugins/search/' . $this->keyword . '/page/' . $page;
-        $response = $this->httpRequest('GET', $resultPageUrl);
+        $resultPageUrl = sprintf("https://wordpress.org/plugins/search/%s/page/%d", $this->keyword, $page);
+
+        try {
+            $response = $this->httpRequest('GET', $resultPageUrl);
+        } catch (ClientExceptionInterface $e) {
+            throw new RankCheckerException($e->getMessage(), $e->getCode(), $e->getPrevious());
+        }
 
         if ($response->getStatusCode() !== 200) {
-            throw new Exception("Failed to fetch " . $resultPageUrl, $response->getStatusCode());
+            throw new RankCheckerException("Failed to fetch " . $resultPageUrl, $response->getStatusCode());
         }
 
         $responseBody = (string) $response->getBody();
         if (empty($responseBody)) {
-            throw new Exception("Empty response received from " . $resultPageUrl, $response->getStatusCode());
+            throw new RankCheckerException("Empty response from " . $resultPageUrl, $response->getStatusCode());
         }
 
         return (string) $response->getBody();
@@ -138,7 +173,7 @@ class RankChecker extends HTTPSupport
     {
         $pc = $dom->filter('article.plugin-card');
         if ($pc->count() < 1) {
-            throw new Exception(".plugin-card HTML node couldn't be found in the DOM tree");
+            throw new RankCheckerException(".plugin-card HTML node couldn't be found in the DOM tree");
         }
 
         $pc->each(
