@@ -29,15 +29,19 @@ of any specific plugin for any specific keyword.
 use Http\Adapter\Guzzle6\Client;
 use ShahariaAzam\WPRankChecker\RankChecker;
 use ShahariaAzam\WPRankChecker\RankCheckerException;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
 require "vendor/autoload.php";
 
-$client = new Client();
+$httpClient = new Client();
+$cacheProvider = new FileSystemAdapter();
 
-$rankChecker = new RankChecker($client);
-$rankChecker->setHttpClient($client);
+$rankChecker = new RankChecker($httpClient, $cacheProvider);
+
 try {
-    $result = $rankChecker->checkRanks();
+    $result = $rankChecker
+        ->setKeyword("mail")
+        ->checkRanks();
 
     // Get rank of your plugins for keyword "mail"
     print_r($result->getRankBySlug('wp-mail-gateway')); // will return integer
