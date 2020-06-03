@@ -31,5 +31,8 @@
         "psr-4": {
             "ShahariaAzam\\WPRankChecker\\Tests\\": "tests"
         }
+    },
+    "scripts": {
+        "code-checks": "./vendor/bin/phpcs --standard=psr2 src/ && ./vendor/bin/php-cs-fixer fix -v --dry-run --stop-on-violation --using-cache=no --path-mode=intersection"
     }
 }
