@@ -1,5 +1,11 @@
 # WordPress Plugins/Themes Keyword Search Rank Checker
 
+[![Code Checks](https://github.com/shahariaazam/wp-rank-checker/workflows/Code-Checks/badge.svg)](https://github.com/shahariaazam/wp-rank-checker/actions?query=workflow%3ACode-Checks)
+[![Build](https://scrutinizer-ci.com/g/shahariaazam/wp-rank-checker/badges/build.png)](https://scrutinizer-ci.com/g/shahariaazam/wp-rank-checker)
+[![Code Coverage](https://scrutinizer-ci.com/g/shahariaazam/wp-rank-checker/badges/coverage.png)](https://scrutinizer-ci.com/g/shahariaazam/wp-rank-checker)
+[![Code Rating](https://scrutinizer-ci.com/g/shahariaazam/wp-rank-checker/badges/quality-score.png)](https://scrutinizer-ci.com/g/shahariaazam/wp-rank-checker)
+[![Code Intellegence](https://scrutinizer-ci.com/g/shahariaazam/wp-rank-checker/badges/code-intelligence.svg)](https://scrutinizer-ci.com/g/shahariaazam/wp-rank-checker)
+
 Check **ranks** for your plugins or themes with specific **keyword** and check how your plugins and themes are growing in WordPress public repository.
 This library will calculate the search result ranking from [WordPress.org plugin repository search page](https://wordpress.org/plugins/search/mail/).
 
