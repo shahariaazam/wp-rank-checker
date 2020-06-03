@@ -1,6 +1,6 @@
-# WordPress Plugins/Themes Rank Checker
+# WordPress Plugins/Themes Keyword Search Rank Checker
 
-Check "ranks" for your plugins or themes with specific "keyword" and check how your plugins and themes are growing in WordPress public repository.
+Check **ranks** for your plugins or themes with specific **keyword** and check how your plugins and themes are growing in WordPress public repository.
 This library will calculate the search result ranking from [WordPress.org plugin repository search page](https://wordpress.org/plugins/search/mail/).
 
 ## Installation
